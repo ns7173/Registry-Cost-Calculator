@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Registry Cost Calculator</title>
+<style>
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/inter-latin-600-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Space Grotesk"; font-weight: 500; font-style: normal; font-display: swap; src: url("fonts/space-grotesk-latin-500-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Space Grotesk"; font-weight: 700; font-style: normal; font-display: swap; src: url("fonts/space-grotesk-latin-700-normal.woff2") format("woff2"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Noto Sans Devanagari"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/noto-sans-devanagari-devanagari-400-normal.woff2") format("woff2"); unicode-range: U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF; }
+@font-face { font-family: "Noto Sans Devanagari"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/noto-sans-devanagari-devanagari-600-normal.woff2") format("woff2"); unicode-range: U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF; }
+html, body { margin: 0; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Layout: inputs on the left, running totals and workings on the right; stacks on phones. */
+:root {
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --fg: #1d2530;
+  --muted: #5d6673;
+  --line: #d9d6cc;
+  --accent: #1f5f5b;
+  --accent-fg: #ffffff;
+  --warn-bg: #fbf0d4;
+  --warn-fg: #6b4b00;
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Noto Sans Devanagari", "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161b20; --surface: #1f262d; --fg: #e8ebee; --muted: #9aa4af; --line: #34404a;
+    --accent: #5fc2b8; --accent-fg: #0f1a19; --warn-bg: #3a2f12; --warn-fg: #f1d58a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161b20; --surface: #1f262d; --fg: #e8ebee; --muted: #9aa4af; --line: #34404a;
+  --accent: #5fc2b8; --accent-fg: #0f1a19; --warn-bg: #3a2f12; --warn-fg: #f1d58a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+h1 { font-family: var(--font-display); font-size: 1.7rem; margin: 0 0 4px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.sec { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h2 { font-family: var(--font-display); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+label { display: flex; flex-direction: column; gap: 4px; font-weight: 500; font-size: 0.9rem; min-width: 0; }
+label small { font-weight: 400; color: var(--muted); }
+input, select {
+  font: inherit; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; width: 100%; min-width: 0;
+}
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > * { flex: 1 1 140px; }
+.check { flex-direction: row; align-items: flex-start; gap: 8px; font-weight: 400; }
+.check input { width: auto; margin-top: 3px; }
+.total { font-family: var(--font-display); font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.kv:last-child { border-bottom: 0; }
+.kv span:first-child { color: var(--muted); }
+.kv b { font-weight: 600; text-align: right; }
+.tablebox { overflow-x: auto; max-height: 360px; overflow-y: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 500; }
+tr.sum td { font-weight: 600; }
+.note { background: var(--warn-bg); color: var(--warn-fg); border-radius: 4px; padding: 10px 12px; font-size: 0.85rem; }
+.hint { color: var(--muted); font-size: 0.82rem; margin: 0; }
+details { border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; }
+summary { cursor: pointer; font-weight: 500; font-size: 0.9rem; }
+details .sec { margin-top: 12px; }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <h1>Registry Cost Calculator</h1>
+  <p class="sub">पंजीयन व्यय गणना · Chhattisgarh sale of land or flat, and lease deeds: market value or lease basis, stamp duty and registration fee. Values shown are examples until you change them.</p>
+
+  <div class="grid">
+    <div class="panel">
+      <label for="mode">Deed type (दस्तावेज़ का प्रकार)
+        <select id="mode">
+          <option value="land" selected>Sale of land or plot (भूमि / भूखंड विक्रय)</option>
+          <option value="flat">Sale of flat, shop or office (फ्लैट / दुकान / कार्यालय विक्रय)</option>
+          <option value="lease">Lease deed (लीज डीड / पट्टा)</option>
+        </select>
+      </label>
+
+      <div class="sec" id="landSec">
+        <h2>Land</h2>
+        <label for="body">Local body (स्थानीय निकाय)
+          <select id="body">
+            <option value="nigam">Nagar Nigam (नगर निगम)</option>
+            <option value="palika" selected>Nagar Palika (नगर पालिका)</option>
+            <option value="panchayat">Nagar Panchayat (नगर पंचायत)</option>
+          </select>
+        </label>
+        <div class="row">
+          <label for="area">Area sold
+            <input id="area" type="number" min="0" step="any" value="670">
+          </label>
+          <label for="unit">Unit
+            <select id="unit">
+              <option value="sqm" selected>sq. m</option>
+              <option value="ha">hectare</option>
+              <option value="sqft">sq. ft</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label for="rate">Plot rate, Rs per sq. m
+            <input id="rate" type="number" min="0" step="any" value="6400">
+          </label>
+          <label for="harate">Rate per hectare, Rs
+            <input id="harate" type="number" min="0" step="any" value="0">
+            <small>Used only above the slab limit</small>
+          </label>
+        </div>
+        <label class="check" for="comm"><input id="comm" type="checkbox"> Inside the main road but used commercially or industrially (+25%, rule 7)</label>
+        <label class="check" for="unirr"><input id="unirr" type="checkbox"> Unirrigated land (-20%, rule 11)</label>
+
+        <h2>Built structure (optional)</h2>
+        <div class="row">
+          <label for="sqft">Built-up area, sq. ft
+            <input id="sqft" type="number" min="0" step="any" value="0">
+          </label>
+          <label for="ctype">Type and roof
+            <select id="ctype">
+              <option value="1150">Residential, RCC roof (1,150)</option>
+              <option value="700">Residential, tin/tile (700)</option>
+              <option value="1800">Shop/other, RCC (1,800)</option>
+              <option value="1000">Shop/other, tin/tile (1,000)</option>
+              <option value="1700">Office, RCC (1,700)</option>
+              <option value="800">Office, tin/tile (800)</option>
+              <option value="1550">Godown/warehouse, RCC (1,550)</option>
+              <option value="500">Godown/warehouse, tin/tile (500)</option>
+            </select>
+          </label>
+        </div>
+        <label for="age">Age of building (rule 12 depreciation)
+          <select id="age">
+            <option value="0">Up to 10 years (none)</option>
+            <option value="0.1">10 to 20 years (10%)</option>
+            <option value="0.2">Over 20 years (20%)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="sec" id="flatSec" hidden>
+        <h2>Flat, shop or office</h2>
+        <div class="row">
+          <label for="farea">Built-up area (बिल्टअप एरिया)
+            <input id="farea" type="number" min="0" step="any" value="900">
+          </label>
+          <label for="funit">Unit
+            <select id="funit">
+              <option value="sqft" selected>sq. ft</option>
+              <option value="sqm">sq. m</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label for="grate">Collector guideline rate (कलेक्टर गाइडलाइन दर)
+            <input id="grate" type="number" min="0" step="any" value="6400">
+            <small>Enter the rate as printed in the guideline for the area</small>
+          </label>
+          <label for="gunit">Guideline rate per
+            <select id="gunit">
+              <option value="sqm" selected>sq. m</option>
+              <option value="sqft">sq. ft</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label for="fctype">Construction type (उपबंध निर्माण दर, Form 2)
+            <select id="fctype">
+              <option value="1150" selected>Residential, RCC roof (1,150)</option>
+              <option value="700">Residential, tin/tile (700)</option>
+              <option value="1800">Shop/other, RCC (1,800)</option>
+              <option value="1000">Shop/other, tin/tile (1,000)</option>
+              <option value="1700">Office, RCC (1,700)</option>
+              <option value="800">Office, tin/tile (800)</option>
+              <option value="1550">Godown/warehouse, RCC (1,550)</option>
+              <option value="500">Godown/warehouse, tin/tile (500)</option>
+            </select>
+          </label>
+          <label for="crate">Construction rate, Rs per sq. ft
+            <input id="crate" type="number" min="0" step="any" value="1150">
+            <small>Filled from the type; edit if the rate changes</small>
+          </label>
+        </div>
+        <label for="floor">Floor (तल)
+          <select id="floor">
+            <option value="ground" selected>Ground floor (भूतल)</option>
+            <option value="low">Basement or first floor (तलघर / प्रथम मंजिल)</option>
+            <option value="high">Second floor and above (द्वितीय एवं अन्य मंजिल)</option>
+          </select>
+        </label>
+        <label for="fage">Age of building (rule 12 depreciation)
+          <select id="fage">
+            <option value="0">Up to 10 years (none)</option>
+            <option value="0.1">10 to 20 years (10%)</option>
+            <option value="0.2">Over 20 years (20%)</option>
+          </select>
+        </label>
+
+        <details open>
+          <summary>Floor concession settings (तल छूट)</summary>
+          <div class="sec">
+            <div class="row">
+              <label for="cg">Ground floor %
+                <input id="cg" type="number" min="0" max="100" step="any" value="0">
+              </label>
+              <label for="cl">Basement / first %
+                <input id="cl" type="number" min="0" max="100" step="any" value="10">
+              </label>
+              <label for="ch">Second and above %
+                <input id="ch" type="number" min="0" max="100" step="any" value="20">
+              </label>
+            </div>
+            <label class="check" for="applyC"><input id="applyC" type="checkbox" checked> Apply the floor concession to the construction rate (in force now)</label>
+            <label class="check" for="applyG"><input id="applyG" type="checkbox"> Apply the floor concession to the collector guideline rate (not applied now; tick if the rule changes)</label>
+            <p class="hint">Today the Government gives the floor concession only on the construction rate. Enter the printed rates in the fields above, since the calculator reduces them itself. If a rate is already reduced, switch the matching box off.</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="sec" id="leaseSec" hidden>
+        <h2>Lease (लीज डीड)</h2>
+        <div class="row">
+          <label for="lrent">Starting rent (किराया), Rs
+            <input id="lrent" type="number" min="0" step="any" value="25000">
+          </label>
+          <label for="lrunit">Rent is given per
+            <select id="lrunit">
+              <option value="month" selected>month</option>
+              <option value="year">year</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label for="lyears">Lease term, years
+            <input id="lyears" type="number" min="0" step="1" value="11">
+          </label>
+          <label for="lmonths">and months
+            <input id="lmonths" type="number" min="0" max="11" step="1" value="0">
+          </label>
+        </div>
+
+        <h2>Rent increase during the lease</h2>
+        <div class="row">
+          <label for="lstep">Increase every (years)
+            <input id="lstep" type="number" min="0" step="1" value="1">
+            <small>1 = every year, 2 = every two years, 0 = no increase</small>
+          </label>
+          <label for="lpct">Increase by %
+            <input id="lpct" type="number" min="0" step="any" value="5">
+            <small>Each increase is on the rent just before it</small>
+          </label>
+        </div>
+
+        <h2>Maintenance and premium (if given separately)</h2>
+        <div class="row">
+          <label for="lmaint">Maintenance, Rs
+            <input id="lmaint" type="number" min="0" step="any" value="0">
+          </label>
+          <label for="lmunit">Maintenance is given per
+            <select id="lmunit">
+              <option value="month" selected>month</option>
+              <option value="year">year</option>
+            </select>
+          </label>
+        </div>
+        <label for="lprem">Premium (प्रीमियम), one-time, Rs
+          <input id="lprem" type="number" min="0" step="any" value="0">
+          <small>Refundable security deposit is not counted, so do not enter it</small>
+        </label>
+        <label for="lbasis">When the term is 1 to 5 years and a premium is given
+          <select id="lbasis">
+            <option value="auto" selected>As per the note: premium @ 5% (otherwise rent @ 2%)</option>
+            <option value="both">Both: rent @ 2% plus premium @ 5%</option>
+          </select>
+        </label>
+        <label class="check" for="lmult"><input id="lmult" type="checkbox"> Multiply maintenance by the term multiple as well (not applied now; tick if the rule changes)</label>
+
+        <details>
+          <summary>Duty rates and multiples (दर तालिका)</summary>
+          <div class="sec">
+            <p class="hint">Edit these if the Government changes the lease table. Registration fee is a share of the stamp duty.</p>
+            <div class="row">
+              <label for="lr1">Up to 5 years: rent + maintenance, duty %
+                <input id="lr1" type="number" min="0" step="any" value="2">
+              </label>
+              <label for="lp1">Up to 5 years: premium, duty %
+                <input id="lp1" type="number" min="0" step="any" value="5">
+              </label>
+            </div>
+            <div class="row">
+              <label for="lm2">Over 5 to 10 years: rent multiple
+                <input id="lm2" type="number" min="0" step="any" value="1.5">
+              </label>
+              <label for="lr2">Over 5 to 10 years: duty %
+                <input id="lr2" type="number" min="0" step="any" value="5">
+              </label>
+            </div>
+            <div class="row">
+              <label for="lm3">Over 10 to 20 years: rent multiple
+                <input id="lm3" type="number" min="0" step="any" value="3">
+              </label>
+              <label for="lr3">Over 10 to 20 years: duty %
+                <input id="lr3" type="number" min="0" step="any" value="5">
+              </label>
+            </div>
+            <div class="row">
+              <label for="lm4">Over 20 to 30 years: rent multiple
+                <input id="lm4" type="number" min="0" step="any" value="5">
+              </label>
+              <label for="lr4">Over 20 to 30 years: duty %
+                <input id="lr4" type="number" min="0" step="any" value="5">
+              </label>
+            </div>
+            <div class="row">
+              <label for="lm5">Over 30 to 99 years: rent multiple
+                <input id="lm5" type="number" min="0" step="any" value="5">
+              </label>
+              <label for="lr5">Over 30 to 99 years: duty %
+                <input id="lr5" type="number" min="0" step="any" value="5">
+              </label>
+            </div>
+            <label for="lreg">Registration fee, % of stamp duty
+              <input id="lreg" type="number" min="0" step="any" value="75">
+            </label>
+          </div>
+        </details>
+      </div>
+
+      <h2>Duty and fees</h2>
+      <div class="row" id="saleRates">
+        <label for="buyer">Buyer
+          <select id="buyer">
+            <option value="5" selected>Male only</option>
+            <option value="4">Female only</option>
+            <option value="4">Joint, male and female</option>
+          </select>
+        </label>
+        <label for="sd">Stamp duty %
+          <input id="sd" type="number" min="0" step="any" value="5">
+        </label>
+        <label for="rf">Registration fee %
+          <input id="rf" type="number" min="0" step="any" value="4">
+        </label>
+      </div>
+      <label class="check" for="regr"><input id="regr" type="checkbox"> Registered by the Registrar himself (extra Rs 25,000)</label>
+      <label class="check" for="slot"><input id="slot" type="checkbox"> Special time slot booked (extra Rs 15,000)</label>
+    </div>
+
+    <div class="panel" aria-live="polite">
+      <h2>Total payable</h2>
+      <div class="total" id="grand">-</div>
+      <div id="summary"></div>
+
+      <h2 id="workhead">Slab workings</h2>
+      <div class="tablebox"><table id="slabs"></table></div>
+      <p class="hint" id="slabnote"></p>
+
+      <div class="note" id="flatnote" hidden>Market value of a flat = (guideline rate x built-up area) + (construction rate x built-up area). The floor concession reduces the rate you tick it for, then the age depreciation is applied on the construction part.</div>
+      <div class="note" id="leasenote" hidden>Lease: up to 5 years, duty is (average annual rent + maintenance) @ 2%, or premium @ 5%. Above 5 years, duty is [(average annual rent x multiple) + maintenance + premium] @ 5%, with the multiple 1.5, 3 or 5 by term. Registration fee is 75% of the stamp duty.</div>
+      <div class="note" id="salenote">Registration fee at 4% follows the Gazette notification of 6 Dec 2024. Stamp duty rates (5%, or 4% with a female buyer) come from public sources and may carry local surcharges, so confirm with the Sub-Registrar before paying. Slab bands use 506 sq. m per 0.050 ha, as in the guideline examples.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var BAND = 506; // sq. m per 0.050 ha, as used in the guideline's worked examples
+  var LIMIT_HA = { nigam: 0.202, palika: 0.150, panchayat: 0.100 };
+  var SQFT = 0.09290304; // sq. m in one sq. ft
+
+  function inr(n) {
+    return "Rs " + Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function num(id) { var v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : 0; }
+  function kvRow(k, val) { return '<div class="kv"><span>' + k + '</span><b>' + val + "</b></div>"; }
+
+  function slabs(body, sqm, rate) {
+    var parts = [];
+    var left = sqm;
+    function take(label, cap, pct) {
+      var a = Math.min(left, cap);
+      if (a > 0) parts.push({ label: label, area: a, pct: pct, value: a * rate * pct / 100 });
+      left -= a;
+    }
+    if (body === "panchayat") {
+      take("Up to 0.050 ha", BAND, 100);
+      take("0.050 to 0.100 ha", Infinity, 25);
+    } else {
+      take("Up to 0.050 ha", BAND, 100);
+      take("0.050 to 0.100 ha", BAND, 80);
+      take("0.100 ha to limit", Infinity, 50);
+    }
+    return parts;
+  }
+
+  function landCalc() {
+    var body = $("body").value;
+    var v = num("area"), unit = $("unit").value;
+    var sqm = unit === "ha" ? v * 10000 : unit === "sqft" ? v * SQFT : v;
+    var ha = sqm / 10000;
+    var rate = num("rate");
+    var limit = LIMIT_HA[body];
+    var over = ha > limit + 1e-9;
+    var land, rows = [], note;
+
+    if (over) {
+      land = ha * num("harate");
+      note = "Area is above " + limit + " ha, so the whole area is valued at the per-hectare rate (" + ha.toFixed(4) + " ha).";
+      if (!num("harate")) note += " Enter the per-hectare rate.";
+    } else {
+      rows = slabs(body, sqm, rate);
+      land = rows.reduce(function (s, r) { return s + r.value; }, 0);
+      note = "Area " + sqm.toFixed(2) + " sq. m = " + ha.toFixed(4) + " ha, within the " + limit + " ha slab limit.";
+    }
+
+    var landBase = land;
+    if ($("comm").checked) land *= 1.25;
+    if ($("unirr").checked) land *= 0.8;
+    var cons = num("sqft") * parseFloat($("ctype").value) * (1 - parseFloat($("age").value));
+
+    var lines = kvRow("Land value", inr(landBase));
+    if ($("comm").checked || $("unirr").checked) lines += kvRow("Land value after adjustments", inr(land));
+    if (cons > 0) lines += kvRow("Construction value", inr(cons));
+
+    var t = "<tr><th>Slab</th><th>Area (sq. m)</th><th>Share of rate</th><th>Value</th></tr>";
+    rows.forEach(function (r) {
+      t += "<tr><td>" + r.label + "</td><td>" + r.area.toFixed(2) + "</td><td>" + r.pct + "%</td><td>" + inr(r.value) + "</td></tr>";
+    });
+    if (!rows.length) t += '<tr><td colspan="4">' + (over ? "Whole area at hectare rate" : "No area entered") + "</td></tr>";
+    return { head: "Slab workings", mv: land + cons, lines: lines, table: t, note: note };
+  }
+
+  function flatCalc() {
+    var fa = num("farea");
+    var areaSqft = $("funit").value === "sqm" ? fa / SQFT : fa;
+    var areaSqm = areaSqft * SQFT;
+
+    var conc = { ground: num("cg"), low: num("cl"), high: num("ch") }[$("floor").value];
+    var gRate = num("grate");
+    var gPerSqm = $("gunit").value === "sqft" ? gRate / SQFT : gRate;
+    if ($("applyG").checked) gPerSqm *= (1 - conc / 100);
+    var cRate = num("crate");
+    if ($("applyC").checked) cRate *= (1 - conc / 100);
+
+    var gVal = gPerSqm * areaSqm;
+    var cDep = parseFloat($("fage").value);
+    var cVal = cRate * areaSqft * (1 - cDep);
+
+    var lines = kvRow("Guideline part", inr(gVal)) + kvRow("Construction part", inr(cVal));
+    if (conc > 0 && ($("applyC").checked || $("applyG").checked)) lines += kvRow("Floor concession", conc + "%");
+
+    var t = "<tr><th>Part</th><th>Area</th><th>Rate used</th><th>Value</th></tr>";
+    t += "<tr><td>Guideline rate</td><td>" + areaSqm.toFixed(2) + " sq. m</td><td>" + inr(gPerSqm) + " /sq. m</td><td>" + inr(gVal) + "</td></tr>";
+    t += "<tr><td>Construction rate</td><td>" + areaSqft.toFixed(2) + " sq. ft</td><td>" + inr(cRate) + " /sq. ft</td><td>" + inr(cVal) + "</td></tr>";
+    var note = "Built-up area " + areaSqft.toFixed(2) + " sq. ft = " + areaSqm.toFixed(2) + " sq. m." +
+      (cDep > 0 ? " Building age depreciation of " + (cDep * 100) + "% is applied to the construction part." : "");
+    return { head: "Flat workings", mv: gVal + cVal, lines: lines, table: t, note: note };
+  }
+
+  function leaseCalc() {
+    var months = Math.round(num("lyears") * 12 + num("lmonths"));
+    var years = months / 12;
+    var rentIn = num("lrent");
+    var monthly = $("lrunit").value === "year" ? rentIn / 12 : rentIn;
+    var step = Math.floor(num("lstep"));
+    var g = num("lpct") / 100;
+
+    // Month by month rent, so a part year at the end is counted fairly.
+    var perYear = [], total = 0;
+    for (var m = 0; m < months; m++) {
+      var yi = Math.floor(m / 12);
+      var k = step > 0 ? Math.floor(m / (12 * step)) : 0;
+      var r = monthly * Math.pow(1 + g, k);
+      if (!perYear[yi]) perYear[yi] = { monthly: r, months: 0, sum: 0 };
+      perYear[yi].months += 1;
+      perYear[yi].sum += r;
+      total += r;
+    }
+    var avg = months > 0 ? total / years : 0;
+    var maint = num("lmaint") * ($("lmunit").value === "month" ? 12 : 1);
+    var prem = num("lprem");
+
+    var band = years <= 5 ? 1 : years <= 10 ? 2 : years <= 20 ? 3 : years <= 30 ? 4 : 5;
+    var bandName = ["", "1 to 5 years", "Over 5 to 10 years", "Over 10 to 20 years", "Over 20 to 30 years", "Over 30 to 99 years"][band];
+    var duty, base = null, note = "";
+
+    if (band === 1) {
+      var rentDuty = (avg + maint) * num("lr1") / 100;
+      var premDuty = prem * num("lp1") / 100;
+      if (prem > 0 && $("lbasis").value === "auto") {
+        duty = premDuty;
+        note = "A premium is given, so duty is charged on the premium at " + num("lp1") + "%, as per the note. Choose \"Both\" if the rent should be charged as well.";
+      } else if (prem > 0) {
+        duty = rentDuty + premDuty;
+        note = "Duty is charged on the rent and maintenance at " + num("lr1") + "% and on the premium at " + num("lp1") + "%.";
+      } else {
+        duty = rentDuty;
+        note = "Duty is charged on average annual rent plus maintenance at " + num("lr1") + "%.";
+      }
+    } else {
+      var mult = num("lm" + band), rate = num("lr" + band);
+      base = avg * mult + (maint * ($("lmult").checked ? mult : 1)) + prem;
+      duty = base * rate / 100;
+      note = "Duty is charged on [(average annual rent x " + mult + ") + maintenance + premium] at " + rate + "%.";
+    }
+    if (months > 0 && years < 1) note += " The term is under 1 year, which the table does not cover, so the 1 to 5 year rule is shown for reference.";
+    if (years > 99) note += " The term is over 99 years, so the last band is applied.";
+
+    var reg = duty * num("lreg") / 100;
+
+    var lines = kvRow("Lease term", Math.floor(months / 12) + " years " + (months % 12) + " months");
+    lines += kvRow("Duty band", bandName);
+    lines += kvRow("Average annual rent", inr(avg));
+    if (maint > 0) lines += kvRow("Maintenance per year", inr(maint));
+    if (prem > 0) lines += kvRow("Premium", inr(prem));
+    if (base !== null) lines += kvRow("Amount on which duty is charged", inr(base));
+
+    var t = "<tr><th>Year</th><th>Rent per month</th><th>Months</th><th>Rent for the year</th></tr>";
+    perYear.forEach(function (y, i) {
+      t += "<tr><td>" + (i + 1) + "</td><td>" + inr(y.monthly) + "</td><td>" + y.months + "</td><td>" + inr(y.sum) + "</td></tr>";
+    });
+    if (!perYear.length) t += '<tr><td colspan="4">Enter the rent and the lease term</td></tr>';
+    else t += '<tr class="sum"><td>Total</td><td></td><td>' + months + "</td><td>" + inr(total) + "</td></tr>";
+
+    return { head: "Rent schedule", lease: true, duty: duty, reg: reg, lines: lines, table: t, note: note };
+  }
+
+  function calc() {
+    var mode = $("mode").value;
+    $("landSec").hidden = mode !== "land";
+    $("flatSec").hidden = mode !== "flat";
+    $("leaseSec").hidden = mode !== "lease";
+    $("saleRates").hidden = mode === "lease";
+    $("flatnote").hidden = mode !== "flat";
+    $("leasenote").hidden = mode !== "lease";
+    $("salenote").hidden = mode === "lease";
+
+    var res = mode === "flat" ? flatCalc() : mode === "lease" ? leaseCalc() : landCalc();
+    var sd, rf, lines = res.lines;
+
+    if (res.lease) {
+      sd = res.duty;
+      rf = res.reg;
+      lines += kvRow("Stamp duty (मुद्रांक शुल्क)", inr(sd));
+      lines += kvRow("Registration fee (" + num("lreg") + "% of stamp duty)", inr(rf));
+    } else {
+      sd = res.mv * num("sd") / 100;
+      rf = res.mv * num("rf") / 100;
+      lines += kvRow("Market value (बाजार मूल्य)", inr(res.mv));
+      lines += kvRow("Stamp duty @ " + num("sd") + "%", inr(sd));
+      lines += kvRow("Registration fee @ " + num("rf") + "%", inr(rf));
+    }
+
+    var extra = ($("regr").checked ? 25000 : 0) + ($("slot").checked ? 15000 : 0);
+    if (extra > 0) lines += kvRow("Additional fees", inr(extra));
+
+    $("summary").innerHTML = lines;
+    $("grand").textContent = inr(sd + rf + extra);
+    $("workhead").textContent = res.head;
+    $("slabs").innerHTML = res.table;
+    $("slabnote").textContent = res.note;
+  }
+
+  $("buyer").addEventListener("change", function () { $("sd").value = $("buyer").value; calc(); });
+  $("fctype").addEventListener("change", function () { $("crate").value = $("fctype").value; calc(); });
+  ["mode", "body", "area", "unit", "rate", "harate", "comm", "unirr", "sqft", "ctype", "age",
+   "farea", "funit", "grate", "gunit", "crate", "floor", "fage", "cg", "cl", "ch", "applyC", "applyG",
+   "lrent", "lrunit", "lyears", "lmonths", "lstep", "lpct", "lmaint", "lmunit", "lprem", "lbasis", "lmult",
+   "lr1", "lp1", "lm2", "lr2", "lm3", "lr3", "lm4", "lr4", "lm5", "lr5", "lreg",
+   "sd", "rf", "regr", "slot"].forEach(function (id) {
+    $(id).addEventListener("input", calc);
+    $(id).addEventListener("change", calc);
+  });
+  calc();
+})();
+</script>
+
+</body>
+</html>

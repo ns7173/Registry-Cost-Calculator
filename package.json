@@ -1,0 +1,42 @@
+{
+  "name": "registry-calculator",
+  "version": "1.0.0",
+  "description": "Chhattisgarh stamp duty and registration fee calculator (land, flat, lease deed)",
+  "author": "Registry Calculator",
+  "main": "electron/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --publish never",
+    "cap:sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "in.registry.calculator",
+    "productName": "Registry Calculator",
+    "files": ["electron/**", "www/**", "package.json"],
+    "directories": { "buildResources": "build", "output": "dist" },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Registry-Calculator-Setup-${version}.${ext}"
+    },
+    "portable": { "artifactName": "Registry-Calculator-Portable-${version}.${ext}" }
+  }
+}
